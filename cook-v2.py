@@ -184,25 +184,28 @@ with st.expander('5\) Results  \- Energy Demand & Cost'):
 with st.expander('6\) Results  \- Health Impacts'):
 	#baseline - health impacts
 	bs_dihap = df_base_cf4['Daily IHAP (PM2.5)'].values[0]
-	bs_ahap = bs_dihap * 365 * 0.9
+	#bs_ahap = bs_dihap * 365 * 0.9
+	bs_ahap = df_base_cf4['Annual IHAP (PM2.5)'].values[0]
 	bs_haz = df_base_cf4['Health Hazard'].values[0]
 	bs_mort = df_base_cf4['Mortality Estimates'].values[0]
 
 	#electric - health impacts
 	el_dihap = df_el_cf4['Daily IHAP (PM2.5)'].values[0]
-	el_ahap = el_dihap * 365 * 0.9
+	#el_ahap = el_dihap * 365 * 0.9
+	el_ahap = df_el_cf4['Annual IHAP (PM2.5)'].values[0]
 	el_haz = df_el_cf4['Health Hazard'].values[0]
 	el_mort = df_el_cf4['Mortality Estimates'].values[0]
 
 	#dataframe - health impacts
-	hlt_var  = {'Variable':['Daily IHAP (PM2.5)','Annual IHAP (PM2.5)','Health Hazard','Averted Premature Mortality'],
+	hlt_var  = {'Variable':['Daily IHAP (PM 2.5)','Annual IHAP (PM 2.5)','Health Hazard','Averted Premature Mortality'],
 	'Units':['μg/m3','mg/m3','-','% or no.'],
-	'Baseline':[bs_dihap.round(0),bs_ahap.round(0),bs_haz,bs_mort],
-	'e-Cooking':[el_dihap,el_ahap,el_haz,el_mort],
-	'Delta':[(el_dihap - bs_dihap),(el_ahap - bs_ahap) ,'-','-']
+	'Baseline':[bs_dihap.round(2),bs_ahap.round(2),bs_haz,bs_mort],
+	'e-Cooking':[el_dihap.round(2),el_ahap.round(2),el_haz,el_mort],
+	'Delta':[(el_dihap - bs_dihap).round(2),(el_ahap - bs_ahap).round(2) ,'-','-']
 	}
-	df_hlt_var = pd.DataFrame(hlt_var)
-	st.dataframe(df_hlt_var)
+	df_hlt_var = pd.DataFrame(hlt_var).round(2)
+	#st.dataframe(df_hlt_var)
+	st.write(df_hlt_var)
 
 with st.expander('7\) Results  \- Financing'):
 	#baseline - financing
