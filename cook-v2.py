@@ -1,13 +1,12 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from pandas import DataFrame, Series 
 from functools import total_ordering
 import streamlit as st
-import pandas as pd
-import numpy as np
 from decimal import *
 import openpyxl
 
-# def highlight_less_than_0(val):
-#     color = 'green' if val < 0 else 'black'
-#     return 'color: %s' % color
 
 def decimal_from_value(value):
     return Decimal(value)
@@ -25,7 +24,8 @@ st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
 state_name = pd.read_csv("states.csv")
 el_price = pd.read_excel("el_price_rev-v2.xlsx")
 el_price_n = pd.read_excel("el_price_rev_add.xlsx") #with microgrid and solar rooftop
-usd_inr = 82.23 # 1 usd = 82.23 INR
+usd_inr = 82.23 #1 USD = 82.23 INR
+
 #Household Profile
 with st.sidebar:
 	st.header("Household Profile")
@@ -40,10 +40,6 @@ with st.sidebar:
 	hh_size = adults + children
 
 # Primary Cooking Fuel Selection
-
-## edits required - urban selection - fuels available - LPG and PNG
-## rural selection - fuels available - Firewood, Biogas and LPG
-
 with st.expander('1\) Select Baseline Cooking Scenario'):
 	#st.header('Baseline Scenario')
 	df_base_cf = pd.read_excel("cook-fuel-stove.xlsx",sheet_name="baseline") ##area_select
@@ -58,7 +54,6 @@ with st.expander('1\) Select Baseline Cooking Scenario'):
 
 # Electric Cooking Selection
 with st.expander('2\) Select Electric Cooking Scenario'):
-	#st.header('e-Cooking Scenario')
 	df_elec_cf = pd.read_excel("cook-fuel-stove.xlsx",sheet_name="e-cooking")
 	df_elec_cf2 = df_elec_cf.loc[(df_elec_cf['Area'] == area_select) & (df_elec_cf['Socio-Economic'] == soc_eco_select)]
 	df_elec_cf1 = df_elec_cf2["Fuel"].drop_duplicates()
@@ -78,14 +73,11 @@ elif hh_size <= 6:
 	bs_dcd = df_base_cf4['Daily cooking duration'].values[0].round(2) * (prst_stack_percent * 0.01)
 else:
 	bs_dcd = (df_base_cf4['Daily cooking duration'].values[0].round(2)) * 1.25 * (prst_stack_percent * 0.01)
-#bs_dcd = df_base_cf4['Daily cooking duration'].values[0].round(2)
 bs_hc = df_base_cf4['Hourly consumption'].values[0] * (prst_stack_percent * 0.01)
-#bs_dc = df_base_cf4['Daily consumption'].values[0]
 bs_dc = (bs_dcd * bs_hc)
 bs_ac = bs_dc * 365 * 0.9
 bs_uce = df_base_cf4['Unit carbon emission'].values[0] * (prst_stack_percent * 0.01)
 bs_tce = bs_uce * bs_ac
-#bs_tce = df_base_cf4['Total carbon emissions (FS+EI*)'].values[0]
 
 #electric demand
 df_el_cf4 = df_elec_cf2.loc[(df_elec_cf2['Stove'] == est_sel) & (df_elec_cf2['Fuel'] == epf_select)]
@@ -95,7 +87,6 @@ elif hh_size <= 6:
 	el_dcd = df_el_cf4['Daily cooking duration'].values[0].round(2) * (est_stack_percent * 0.01)
 else:
 	el_dcd = (df_el_cf4['Daily cooking duration'].values[0].round(2)) * 1.25 * (est_stack_percent * 0.01)
-#el_dcd = df_el_cf4['Daily cooking duration'].values[0].round(2)
 el_hc = df_el_cf4['Hourly consumption'].values[0] * (est_stack_percent * 0.01)
 el_dc = el_dcd * bs_hc
 el_ac = el_dc * 365 * 0.9
@@ -104,7 +95,6 @@ el_tce = el_uce * el_ac
 
 
 with st.expander('3\) Cooking Pattern'):
-	#st.markdown('Region & Cuisine')
 	mask = df_region['States'].str.contains(state_select, case=False, na=False)
 	st.dataframe(df_region[mask].iloc[:,0:1],width=120)
 	st.table(df_region[mask].iloc[:,2:3])
@@ -112,9 +102,6 @@ with st.expander('3\) Cooking Pattern'):
 	st.markdown('Daily Cooking Pattern')
 	df_dail_cook = df_region.iloc[:3,4:7]
 	df_dail_cook1 = pd.DataFrame([['Breakfast',(bs_dc*0.35),(el_dc*0.35)],['Lunch',(bs_dc*0.4),(el_dc*0.4)],['Dinner',(bs_dc*0.25),(el_dc*0.25)]], index = [0,1,2],columns= ['Meal','Baseline energy demand (kWh)','e-cooking energy demand (kWh)'])
-	#df_dail_cook = pd.merge(df_dail_cook,df_dail_cook1, on = 'key')
-	#st.dataframe(df_dail_cook)
-	#st.dataframe(df_dail_cook1)
 	df_dail_cook = pd.merge(df_dail_cook,df_dail_cook1, how = 'left', on = 'Meal')
 	st.dataframe(df_dail_cook)
 
@@ -125,7 +112,6 @@ with st.expander('3\) Cooking Pattern'):
 #st.write(table, unsafe_allow_html=True)
 
 # Results - Cooking Techno-economic analysis
-
 
 with st.expander('4\) Results  \- Cookstove Characteristics'):
 	#baseline stove charactersitics
@@ -138,7 +124,6 @@ with st.expander('4\) Results  \- Cookstove Characteristics'):
 
 	#electric stove characteristics
 	df_el_cf4 = df_elec_cf2.loc[(df_elec_cf2['Stove'] == est_sel) & (df_elec_cf2['Fuel'] == epf_select)]
-	#df_el_cf4 = df_elec_cf2.loc[df_elec_cf2['Stove'] == est_sel]
 	el_life = (df_el_cf4['Life'].values[0]).round(0)
 	el_eff = ((df_el_cf4['Thermal Efficiency'].values[0]) *100).round(0)
 	el_capex = (df_el_cf4['Capex'].values[0]).round(0)
@@ -146,9 +131,6 @@ with st.expander('4\) Results  \- Cookstove Characteristics'):
 	el_tcost = (el_capex + el_opex).round(0)
 	
 	#dataframe - cookstove characteristics
-	#cst_var1 = {'Variable':['Type'],'Units':['-'],'Baseline':[prst_select],'e-Cooking':[est_sel],'Delta':['-']}
-	#df_cst_var1 = pd.DataFrame(cst_var1)
-	#st.dataframe(cst_var1)
 	cst_var  = {'Variable':['Type','Life','Thermal Efficiency', 'Capex', 'Overheads', 'Total Cost'],
 	'Units':['-','Years','%','INR','INR/year','INR'],
 	'Baseline':[prst_select, bs_life.round(0),bs_eff.round(0),bs_capex,bs_opex,bs_tcost],
@@ -156,75 +138,14 @@ with st.expander('4\) Results  \- Cookstove Characteristics'):
 	'Delta':['-',(el_life-bs_life).round(0),(el_eff - bs_eff).round(0),(el_capex - bs_capex).round(0),(el_opex - bs_opex).round(0),(el_tcost-bs_tcost).round(0)]
 	}
 	df_cst_var = pd.DataFrame(cst_var)
+
+	## applying background colours to the dataframe
 	st.dataframe(df_cst_var)
-
-	# def highlight_rows(row):
-	# 	value = row.loc['Delta']
-	# 	if value <= 0:
-	# 		color = '#BAFFC9' # Green
-	# 	else:
-	# 		color = '#FFB3BA' # Red
-	# 	return ['background-color: {}'.format(color) for r in row]
-
-	# df_cst_var1 = df_cst_var.style.apply(highlight_rows, axis=1).set_precision(2)
-	# #df_cst_var = df_cst_var.style.set_precision(2)
-	# st.dataframe(df_cst_var1)
-
-### concatenation example
-
-	def highl_rows(row):
-		value = row.loc['Delta']
-		if value <= 0:
-			color = '#FFB3BA ' # Green
-		else:
-			color = '#BAFFC9' # Red
-		return ['background-color: {}'.format(color) for r in row]
-	
-
-	# test2 = df_cst_var.style.apply(highl_rows, axis=1).set_precision(2)
-	# #df_cst_var = df_cst_var.style.set_precision(2)
-	
-	# #test3 = pd.concat(df_cst_var1,test2)
-	# st.dataframe(test2)
-	# test3 = df_cst_var1.style.concat(test2)
-
-	# st.dataframe(test3)
-
 	
 
 # Results - Energy Demand)
 
 with st.expander('5\) Results  \- Energy Demand & Cost'):
-	#baseline energy demand
-	## daily cooking duration
-	# if hh_size < 3:
-	# 	bs_dcd = (df_base_cf4['Daily cooking duration'].values[0].round(2))* 0.75
-	# elif hh_size <= 6:
-	# 	bs_dcd = df_base_cf4['Daily cooking duration'].values[0].round(2)
-	# else:
-	# 	bs_dcd = (df_base_cf4['Daily cooking duration'].values[0].round(2)) * 1.25
-	# #bs_dcd = df_base_cf4['Daily cooking duration'].values[0].round(2)
-	# bs_hc = df_base_cf4['Hourly consumption'].values[0]
-	# #bs_dc = df_base_cf4['Daily consumption'].values[0]
-	# bs_dc = (bs_dcd * bs_hc)
-	# bs_ac = bs_dc * 365 * 0.9
-	# bs_uce = df_base_cf4['Unit carbon emission'].values[0]
-	# bs_tce = bs_uce * bs_ac
-	# #bs_tce = df_base_cf4['Total carbon emissions (FS+EI*)'].values[0]
-	
-	# #electric demand
-	# if hh_size < 3:
-	# 	el_dcd = (df_el_cf4['Daily cooking duration'].values[0].round(2))* 0.75
-	# elif hh_size <= 6:
-	# 	el_dcd = df_el_cf4['Daily cooking duration'].values[0].round(2)
-	# else:
-	# 	el_dcd = (df_el_cf4['Daily cooking duration'].values[0].round(2)) * 1.25
-	# #el_dcd = df_el_cf4['Daily cooking duration'].values[0].round(2)
-	# el_hc = df_el_cf4['Hourly consumption'].values[0]
-	# el_dc = el_dcd * bs_hc
-	# el_ac = el_dc * 365 * 0.9
-	# el_uce = df_el_cf4['Unit carbon emission'].values[0]
-	# el_tce = el_uce * el_ac
 
 	#dataframe - energy demand
 	encons_var  = {'Variable':['Daily cooking duration', 'Hourly consumption', 'Daily consumption', 'Annual consumption','Unit carbon emission','Annual carbon emission'],
@@ -235,13 +156,10 @@ with st.expander('5\) Results  \- Energy Demand & Cost'):
 	}
 	df_encons_var = pd.DataFrame(encons_var)
 	df_encons_var_round = df_encons_var.round(2)
-	#st.dataframe(df_encons_var)
 
-# with st.expander('6\) Results  \- Energy Cost'):
 	#baseline - energy cost
 	bs_uc = df_base_cf4['Unit cost'].values[0] #unit cost
 	bs_uc = np.array(bs_uc)
-	#bs_opc = df_base_cf4['Opex'].values[0] #opex
 	bs_opc = bs_uc * bs_ac
 	bs_ovc = df_base_cf4['Overheads (Fuel)'].values[0] #overheads
 	bs_etc = bs_opc + bs_ovc #total cost
@@ -249,10 +167,7 @@ with st.expander('5\) Results  \- Energy Demand & Cost'):
 
 	#electric cost
 	el_price2 = el_price[['State',soc_eco_select]] #filtering dataframe
-	#el_price3 = el_price2.loc[el_price2['State'] == state_select, soc_eco_select] #unit cost
 
-	### revision to include microgrid and solar rooftop
-	#el_price3_1 = el_price2.loc[el_price2['State'] == state_select,el_price2['Source'] == epf_select,soc_eco_select] #unit cost
 	if epf_select == 'Microgrid':
 		el_price3 = 20
 		el_price3_1 = 20
@@ -261,21 +176,10 @@ with st.expander('5\) Results  \- Energy Demand & Cost'):
 		el_price3_1 = 0
 	else:
 		el_price3 = el_price2.loc[el_price2['State'] == state_select, soc_eco_select].values #unit cost
-		#el_price3 = el_price3.astype(np.float64)
-		el_price3_1 = str(el_price3).replace(' [', '').replace('[', '').replace(']', '')
-		#el_price3_list = el_price3.flatten().tolist()
-		#el_price3 = el_price2.loc[el_price2['State'] == state_select, soc_eco_select].to_string #unit cost
-
-	#st.markdown(type(el_price3))
-	#st.markdown(type(el_ac))
-	#st.markdown(str(el_price3).replace(' [', '').replace('[', '').replace(']', ''))
-	#el_price_n1 = el_price_n['State',soc_eco_select] #filtering dataframe
-	#el_uc_n2 = el_price4.item()
-	el_uc = el_price3
+		el_price3_1 = str(el_price3.round(2)).replace(' [', '').replace('[', '').replace(']', '')
+		
+	el_uc = el_price3.round(2)
 	el_uc_1 = el_price3_1
-	#el_uc = df_el_cf4['Unit cost'].values[0]
-	#el_opc = df_el_cf4['Opex'].values[0] #opex
-	#el_ac = np.array(el_ac)
 	el_opc = el_uc * el_ac
 	el_opc_1 = str(el_opc.round(2)).replace(' [', '').replace('[', '').replace(']', '')
 	el_ovc = df_el_cf4['Overheads (Fuel)'].values[0] #overheads
@@ -303,39 +207,56 @@ with st.expander('5\) Results  \- Energy Demand & Cost'):
 	df_encost_var = pd.DataFrame(encost_var)
 	df_tcost = pd.concat([df_encons_var,df_encost_var], ignore_index=True)
 	df_tcost = df_tcost.astype(str)
-	#df_tcost = df_tcost.applymap(lambda x: "{:.2f}".format(x))
-	#st.write(df_tcost)
+	
 	st.dataframe(df_tcost)
+	# st.dataframe(sty_df_tcost)
+
+	st.markdown("**:green[Test Section]**")
+### START - Sample colour tables
+
+	el_uc_2 = float(el_uc_1)
+	el_opc_2 = float(el_opc_1)
+	el_etc_2 = float(el_etc_1)
+
+	#dataframe - energy cost
+	encost_var_test  = {'Variable':['Unit cost', 'Opex', 'Overheads', 'Total operating cost','Social Carbon Cost'],
+	'Units':['INR/kWh','INR/year','INR/year','INR/year','INR/year'],
+	'Baseline':[bs_uc,bs_opc.round(2),bs_ovc,bs_etc.round(2),bs_scc],
+	'e-Cooking':[el_uc_2,el_opc_2,el_ovc,el_etc_2,el_scc],
+	'Delta':[(el_uc_2 - bs_uc),(el_opc_2 - bs_opc).round(2),(el_ovc - bs_ovc).round(2),(el_etc_2 - bs_etc).round(2), (el_scc - bs_scc)]
+	}
+	df_encost_var_test = pd.DataFrame(encost_var_test)
+	df_tcost_test = pd.concat([df_encons_var,df_encost_var_test], ignore_index=True)
+	
+	# Apply the function to the DataFrame
+	df_tcost_test = df_tcost_test.style.apply(highlight_negative, axis=1)
+
+	
+	st.dataframe(df_tcost_test)
+
+### END - Sample colour tables
+
+
 
 with st.expander('6\) Results  \- Health Impacts'):
 	#baseline - health impacts
 	bs_dihap = df_base_cf4['Daily IHAP (PM2.5)'].values[0] * (prst_stack_percent * 0.01)
-	bs_ahap = bs_dihap * 365 * 0.9
-	#bs_ahap = df_base_cf4['Annual IHAP (PM2.5)'].values[0]
+	bs_ahap = (bs_dihap * 365 * 0.9) / 1000
 	bs_haz = df_base_cf4['Health Hazard'].values[0]
-	#bs_mort = df_base_cf4['Mortality Estimates'].values[0]
 
 	#electric - health impacts
 	el_dihap = df_el_cf4['Daily IHAP (PM2.5)'].values[0] * (est_stack_percent * 0.01)
-	el_ahap = el_dihap * 365 * 0.9
-	#el_ahap = df_el_cf4['Annual IHAP (PM2.5)'].values[0]
+	el_ahap = (el_dihap * 365 * 0.9) / 1000
 	el_haz = df_el_cf4['Health Hazard'].values[0]
-	#el_mort = df_el_cf4['Mortality Estimates'].values[0]
 
 	#dataframe - health impacts
-	#hlt_var  = {'Variable':['Daily IHAP (PM 2.5)','Annual IHAP (PM 2.5)','Health Hazard','Averted Premature Mortality'],
-	#'Units':['μg/m3','mg/m3','-','% or no.'],
 	hlt_var  = {'Variable':['Daily IHAP (PM 2.5)','Annual IHAP (PM 2.5)','Health Hazards'],
 	'Units':['μg/m3','mg/m3','-'],
-	#'Baseline':[bs_dihap.round(2),bs_ahap.round(2),bs_haz,bs_mort],
 	'Baseline':[bs_dihap.round(2),bs_ahap.round(2),bs_haz],
-	#'e-Cooking':[el_dihap.round(2),el_ahap.round(2),el_haz,el_mort],
 	'e-Cooking':[el_dihap.round(2),el_ahap.round(2),el_haz],
-	#'Delta':[(el_dihap - bs_dihap).round(2),(el_ahap - bs_ahap).round(2) ,'-','-']
 	'Delta':[(el_dihap - bs_dihap).round(2),(el_ahap - bs_ahap).round(2),'-']
 	}
 	df_hlt_var = pd.DataFrame(hlt_var).round(2)
-	#st.dataframe(df_hlt_var)
 	st.write(df_hlt_var)
 
 	st.write('The updated WHO guidelines state that annual average concentrations of PM2.5 should not exceed 5 µg/m3, while 24-hour average exposures should not exceed 15 µg/m3 more than 3 - 4 days per year.')
@@ -344,38 +265,20 @@ with st.expander('7\) Results  \- Financing'):
 	#baseline - financing
 	bs_aninc = df_base_cf4['Annual Income'].values[0]
 	bs_pbp = df_base_cf4['Payback period'].values[0]
-	#bs_ucc = df_base_cf4['Unit cost of carbon credit (CC)'].values[0]
-	#bs_tce = df_base_cf4['Total carbon emissions (FS+EI*)'].values[0]
-	#bs_tcrp = df_base_cf4['Total CC revenue possible'].values[0]
 
 	#electric - financing
 	el_aninc = df_el_cf4['Annual Income'].values[0]
-	#el_pbp = df_el_cf4['Payback period'].values[0]
 	el_pbp = (el_capex)/((bs_etc - el_etc) + (bs_opex - el_opex))
 	el_pbp_1 = str(el_pbp.round(2)).replace(' [', '').replace('[', '').replace(']', '')
 	el_pbp_sc = (el_capex)/((bs_etc - el_etc) + (bs_opex - el_opex) + (bs_scc - el_scc))
 	el_pbp_sc1 = str(el_pbp_sc.round(2)).replace(' [', '').replace('[', '').replace(']', '')
 	el_sav = (-((el_etc - bs_etc)))
 	el_sav1 = str(el_sav.round(2)).replace(' [', '').replace('[', '').replace(']', '')
-	#el_uce = df_el_cf4['Unit carbon emission'].values[0]
-	#el_ucc = df_el_cf4['Unit cost of carbon credit (CC)'].values[0]
-	#el_tce = df_el_cf4['Total carbon emissions (FS+EI*)'].values[0]
-	#el_tcrp = df_el_cf4['Total CC revenue possible'].values[0]	
-	#el_tcrp = ((bs_tce - el_tce) * el_ucc)
 
-	#'Unit carbon emission','Total carbon emissions (FS+EI*)'
-	#bs_uce,bs_tce.round(2)
-	#el_uce.round(2),el_tce.round(2)
-	#'INR/MtCO2eq.','INR/year'
-	#,el_ucc,el_tcrp.round(2)
-	#st.markdown('FS - Fuel Switch, EI - Efficiency Improvement')
-	
-	#'Unit cost of carbon credit (CC)','Total CC revenue possible'
 	fin_var  = {'Variable':['Annual Income of HH','Payback period','Payback period (incld. social carbon cost)','Annual Opex Savings'],
 	'Units':['INR','years','years','INR'],
 	'Baseline':[bs_aninc,'-','-','-'],
 	'e-Cooking':['NA',el_pbp_1,el_pbp_sc1,el_sav1],
-	#'Delta':['-','-','-']
 	}
 	df_fin_var = pd.DataFrame(fin_var)
 	st.dataframe(df_fin_var)
