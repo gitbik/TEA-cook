@@ -1,9 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 from pandas import DataFrame, Series 
 from functools import total_ordering
 import streamlit as st
+from streamlit import components
 from decimal import *
 import openpyxl
 
@@ -140,8 +140,23 @@ with st.expander('4\) Results  \- Cookstove Characteristics'):
 	df_cst_var = pd.DataFrame(cst_var)
 
 	## applying background colours to the dataframe
-	st.dataframe(df_cst_var)
 	
+	### START - color dataframe
+
+
+	def highlight_rows(s):
+		if s.name in [1,2]:
+			return ['background-color: lightgreen' if s['Baseline'] < s['e-Cooking'] else '' for v in s]
+		elif s.name != 0:
+			return ['background-color: lightgreen' if s['e-Cooking'] < s['Baseline'] else '' for v in s]
+		else:
+			return ['' for v in s]
+
+	df_cst_var_col = df_cst_var.style.apply(highlight_rows, axis=1).format(precision=2)
+
+	st.dataframe(df_cst_var_col)
+
+	### END - color dataframe
 
 # Results - Energy Demand)
 
@@ -178,7 +193,7 @@ with st.expander('5\) Results  \- Energy Demand & Cost'):
 		el_price3 = el_price2.loc[el_price2['State'] == state_select, soc_eco_select].values #unit cost
 		el_price3_1 = str(el_price3.round(2)).replace(' [', '').replace('[', '').replace(']', '')
 		
-	el_uc = el_price3.round(2)
+	el_uc = el_price3
 	el_uc_1 = el_price3_1
 	el_opc = el_uc * el_ac
 	el_opc_1 = str(el_opc.round(2)).replace(' [', '').replace('[', '').replace(']', '')
@@ -208,11 +223,16 @@ with st.expander('5\) Results  \- Energy Demand & Cost'):
 	df_tcost = pd.concat([df_encons_var,df_encost_var], ignore_index=True)
 	df_tcost = df_tcost.astype(str)
 	
-	st.dataframe(df_tcost)
+	# st.dataframe(df_tcost)
 	# st.dataframe(sty_df_tcost)
 
-	st.markdown("**:green[Test Section]**")
+	# st.markdown("**:green[Test Section]**")
 ### START - Sample colour tables
+	def highlight_greater(row):
+		if row['Baseline'] > row['e-Cooking']:
+			return ['background-color: lightgreen']*5
+		else:
+			return ['']*5
 
 	el_uc_2 = float(el_uc_1)
 	el_opc_2 = float(el_opc_1)
@@ -227,11 +247,8 @@ with st.expander('5\) Results  \- Energy Demand & Cost'):
 	}
 	df_encost_var_test = pd.DataFrame(encost_var_test)
 	df_tcost_test = pd.concat([df_encons_var,df_encost_var_test], ignore_index=True)
-	
 	# Apply the function to the DataFrame
-	df_tcost_test = df_tcost_test.style.apply(highlight_negative, axis=1)
-
-	
+	df_tcost_test = df_tcost_test.style.apply(highlight_greater, axis=1).format(precision=2)	
 	st.dataframe(df_tcost_test)
 
 ### END - Sample colour tables
@@ -257,9 +274,43 @@ with st.expander('6\) Results  \- Health Impacts'):
 	'Delta':[(el_dihap - bs_dihap).round(2),(el_ahap - bs_ahap).round(2),'-']
 	}
 	df_hlt_var = pd.DataFrame(hlt_var).round(2)
-	st.write(df_hlt_var)
+	# st.write(df_hlt_var)
 
-	st.write('The updated WHO guidelines state that annual average concentrations of PM2.5 should not exceed 5 µg/m3, while 24-hour average exposures should not exceed 15 µg/m3 more than 3 - 4 days per year.')
+
+### START - Color section
+	def hlight_health(s):
+		if s.name in [0,1]:
+			return ['background-color: lightgreen' if s['Baseline'] > s['e-Cooking'] else '' for v in s]
+		else:
+			return ['' for v in s]
+		
+	df_hlt_var_col = df_hlt_var.style.apply(hlight_health, axis=1).format(precision=2)
+
+	st.dataframe(df_hlt_var_col)
+
+### END - Color Section
+
+### START - custome height and width
+	# components.v1.html(
+	# 	f"""
+	# 	<style>
+	# 		td:nth-child(4), td:nth-child(5) {{
+	# 			width: 150px;
+	# 		}}
+	# 		tr:nth-child(4) td {{
+	# 			height: 200px;
+	# 		}}
+	# 	</style>
+	# 	{df_hlt_var_col.to_html()}
+	# 	""",
+	# 	width=700,
+	# 	height=600,
+	# 	scrolling=True
+	# )
+
+### END - custome height and width
+	
+	st.markdown('<p style="font-size: 14px;"><em>The updated WHO guidelines state that annual average concentrations of PM2.5 should not exceed 5 µg/m3, while 24-hour average exposures should not exceed 15 µg/m3 more than 3 - 4 days per year.</em></p>', unsafe_allow_html=True)
 
 with st.expander('7\) Results  \- Financing'):
 	#baseline - financing
@@ -268,21 +319,51 @@ with st.expander('7\) Results  \- Financing'):
 
 	#electric - financing
 	el_aninc = df_el_cf4['Annual Income'].values[0]
+	
 	el_pbp = (el_capex)/((bs_etc - el_etc) + (bs_opex - el_opex))
 	el_pbp_1 = str(el_pbp.round(2)).replace(' [', '').replace('[', '').replace(']', '')
+	el_pbp_2 = float(el_pbp_1)
+	
 	el_pbp_sc = (el_capex)/((bs_etc - el_etc) + (bs_opex - el_opex) + (bs_scc - el_scc))
 	el_pbp_sc1 = str(el_pbp_sc.round(2)).replace(' [', '').replace('[', '').replace(']', '')
+	el_pbp_sc2 = float(el_pbp_sc1) 
+
 	el_sav = (-((el_etc - bs_etc)))
 	el_sav1 = str(el_sav.round(2)).replace(' [', '').replace('[', '').replace(']', '')
+	el_sav2 = float(el_sav1)
 
 	fin_var  = {'Variable':['Annual Income of HH','Payback period','Payback period (incld. social carbon cost)','Annual Opex Savings'],
 	'Units':['INR','years','years','INR'],
 	'Baseline':[bs_aninc,'-','-','-'],
-	'e-Cooking':['NA',el_pbp_1,el_pbp_sc1,el_sav1],
+	'e-Cooking':['NA',el_pbp_2,el_pbp_sc2,el_sav2],
 	}
 	df_fin_var = pd.DataFrame(fin_var)
-	st.dataframe(df_fin_var)
+	# st.dataframe(df_fin_var)
+
+### START - Color section
+	# def hlight_fin(s):
+	# 	if s.name in [1,2,3]:
+	# 		return ['background-color: lightgreen' if s['Baseline'] > s['e-Cooking'] else '' for v in s]
+	# 	else:
+	# 		return ['' for v in s]
+
+	def highlight_rows(df):
+		def hlight_fin(s):
+			if s.name in [1,2,3]:
+				return ['background-color: lightgreen' if s['e-Cooking'] > 0 else '' for v in s]
+			else:
+				return ['' for v in s]
+		df = df.style.apply(hlight_fin, axis=1).format(precision=2)
+		return df
+
+	df_fin_var_col = highlight_rows(df_fin_var)
 	
+	# df_fin_var_col = df_fin_var.style.apply(highlight_fin, axis=1).format(precision=2)
+
+	st.dataframe(df_fin_var_col)
+
+### END - Color Section
+
 st.markdown('<mark>*This is a draft version. Values mentioned are based on research papers and empirical evidence.*</mark>', unsafe_allow_html=True)
 
 st.markdown('<mark>*This analysis is a part of Deep Electrification initiative ideated by Vasudha Foundation and supported by SED Fund. For any queries, collaboration or further use of this research. Please drop a mail to bikash@vasudhaindia.org*</mark>', unsafe_allow_html=True)
