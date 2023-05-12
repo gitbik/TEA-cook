@@ -6,6 +6,28 @@ import streamlit as st
 from streamlit import components
 from decimal import *
 import openpyxl
+from googletrans import Translator
+
+### START - language localisation
+
+languages = {
+    'bn': 'Bengali',
+    'gu': 'Gujarati',
+    'hi': 'Hindi',
+    'kn': 'Kannada',
+    'ml': 'Malayalam',
+    'ne': 'Nepali',
+    'or': 'Odia',
+    'pa': 'Punjabi',
+    'sd': 'Sindhi',
+    'ta': 'Tamil',
+    'te': 'Telugu',
+    'ur': 'Urdu'
+}
+
+translator = Translator()
+
+### END - language localisation
 
 
 def decimal_from_value(value):
@@ -28,42 +50,83 @@ usd_inr = 82.23 #1 USD = 82.23 INR
 
 #Household Profile
 with st.sidebar:
-	st.header("Household Profile")
-	adults = st.slider('Adults', min_value=1, max_value=5, value=None, step=1)  # slider widget to select family members
-	st.write('Number of Adults in the Household -', adults)
-	children = st.slider('Children', min_value=0, max_value=5, value=None, step=1)  # slider widget to select family members
-	st.write('Number of Children in the Household -', children)
-	st.write('*Total number of persons in the Household* -', adults+children)
-	area_select =  st.selectbox('Area Type',('Urban','Rural'))
-	soc_eco_select= st.selectbox('Socio-Economic Status',('Lower','Middle','Higher'))
-	state_select = st.selectbox('State',state_name)
+	# Create a selectbox for language selection
+	language = st.selectbox('Select language', list(languages.values()))
+	# Get the language code from the selected language
+	language_code = [code for code, lang in languages.items() if lang == language][0]
+
+	hh_prof =  translator.translate('Household Profile', dest=language_code)
+	st.header("Household Profile / " + hh_prof.text)
+	
+	adults_lang = translator.translate('Adults', dest=language_code)
+	adults = st.slider('Adults / ' + adults_lang.text, min_value=1, max_value=5, value=None, step=1)  # slider widget to select family members
+	
+	adults_hh_lang = translator.translate('Number of Adults in the Household', dest=language_code)	
+	st.write('Number of Adults in the Household / ' + adults_hh_lang.text + ' -', adults)
+	
+	
+	child_lang = translator.translate('Children', dest=language_code)	
+	children = st.slider('Children / '+ child_lang.text, min_value=0, max_value=5, value=None, step=1)  # slider widget to select family members
+	
+	child_hh_lang = translator.translate('Number of Children in the Household', dest=language_code)	
+	st.write('Number of Children in the Household / '+ child_hh_lang.text + '-', children)
+	
+	tot_hh_lang = translator.translate('Total number of persons in the Household', dest=language_code)
+	st.write('*Total number of persons in the Household* / ' + tot_hh_lang.text + '-', adults+children)
+	
+	area_lang = translator.translate('Area Type', dest=language_code)
+	urban_lang = translator.translate('Urban', dest=language_code)
+	rural_lang = translator.translate('Rural', dest=language_code)
+	area_select =  st.selectbox('Area Type / ' + area_lang.text,('Urban','Rural'))
+	
+	soc_eco_lang = translator.translate('Socio-Economic Status', dest=language_code)
+	soc_eco_select= st.selectbox('Socio-Economic Status / '+ soc_eco_lang.text,('Lower','Middle','Higher'))
+	
+	state_select_lang = translator.translate('State', dest=language_code)
+	state_select = st.selectbox('State / ' + state_select_lang.text, state_name)
+	
 	hh_size = adults + children
 
 # Primary Cooking Fuel Selection
-with st.expander('1\) Select Baseline Cooking Scenario'):
+
+sel_base_lang = translator.translate('Select Baseline Cooking Scenario', dest = language_code)
+with st.expander('1\) Select Baseline Cooking Scenario / ' + sel_base_lang.text ):
 	#st.header('Baseline Scenario')
 	df_base_cf = pd.read_excel("cook-fuel-stove.xlsx",sheet_name="baseline") ##area_select
 	df_base_cf2 = df_base_cf.loc[(df_base_cf['Area'] == area_select) & (df_base_cf['Socio-Economic'] == soc_eco_select)]
 	df_base_cf1 = df_base_cf2["Fuel"].drop_duplicates()
-	bpf_select = st.selectbox('Primary Cooking Fuel',(df_base_cf1))
+	
+	bpf_select_lang = translator.translate('Primary Cooking Fuel', dest=language_code)
+	bpf_select = st.selectbox('Primary Cooking Fuel / ' + bpf_select_lang.text,(df_base_cf1))
 	mask_bf_stv = df_base_cf['Fuel'].isin([bpf_select])
 	df_base_cf_st = df_base_cf2[mask_bf_stv].iloc[:,2]
 
-	prst_select = st.selectbox('Primary Cookstove', (df_base_cf_st))
-	prst_stack_percent = st.slider('% of cooking done with the primary cookstove',min_value = 50, max_value = 100, step = 10, value = 100)
+	prst_select_lang = translator.translate('Primary Cookstove', dest=language_code)
+	prst_select = st.selectbox('Primary Cookstove / ' + prst_select_lang.text, (df_base_cf_st))
+	
+	prst_stack_percent_lang = translator.translate('Percentage of cooking done with the primary cookstove', dest=language_code)
+	prst_stack_percent = st.slider('% of cooking done with the primary cookstove / ' + prst_stack_percent_lang.text,min_value = 50, max_value = 100, step = 10, value = 100)
 
 # Electric Cooking Selection
-with st.expander('2\) Select Electric Cooking Scenario'):
+sel_el_lang = translator.translate('Select Electric Cooking Scenario', dest=language_code)
+
+with st.expander('2\) Select Electric Cooking Scenario / ' + sel_el_lang.text):
 	df_elec_cf = pd.read_excel("cook-fuel-stove.xlsx",sheet_name="e-cooking")
 	df_elec_cf2 = df_elec_cf.loc[(df_elec_cf['Area'] == area_select) & (df_elec_cf['Socio-Economic'] == soc_eco_select)]
 	df_elec_cf1 = df_elec_cf2["Fuel"].drop_duplicates()
-	epf_select = st.selectbox('Electricity Source', (df_elec_cf1))
+	
+	epf_select_lang = translator.translate('Electricity Source', dest=language_code)
+	epf_select = st.selectbox('Electricity Source / ' + epf_select_lang.text, (df_elec_cf1))
 	mask_ef_stv = df_elec_cf['Fuel'].isin([epf_select])
 	df_elec_cf_st = df_elec_cf2[mask_ef_stv].iloc[:,2]
-	est_sel = st.selectbox('e-Cooking Appliance',(df_elec_cf_st))
-	est_stack_percent = st.slider('% of total cooking to be done', min_value = 50, max_value = 100, step = 10)
 	
-# Cooking Pattern
+	est_sel_lang = translator.translate('e-Cooking Appliance', dest=language_code)
+	est_sel = st.selectbox('e-Cooking Appliance / ' + est_sel_lang.text,(df_elec_cf_st))
+	
+	est_stack_percent_lang = translator.translate('Percentage of total cooking to be done',dest=language_code)
+	est_stack_percent = st.slider('% of total cooking to be done / ' + est_stack_percent_lang.text, min_value = 50, max_value = 100, step = 10)
+	
+
 df_region = pd.read_excel("region-cooking.xlsx")
 
 df_base_cf4 = df_base_cf2.loc[(df_base_cf2['Stove'] == prst_select)]
@@ -94,12 +157,15 @@ el_uce = df_el_cf4['Unit carbon emission'].values[0] * (est_stack_percent * 0.01
 el_tce = el_uce * el_ac
 
 
-with st.expander('3\) Cooking Pattern'):
+# Cooking Pattern
+cook_patt_lang = translator.translate('Cooking Pattern',dest=language_code)
+with st.expander('3\) Cooking Pattern / ' + cook_patt_lang.text):
 	mask = df_region['States'].str.contains(state_select, case=False, na=False)
 	st.dataframe(df_region[mask].iloc[:,0:1],width=120)
 	st.table(df_region[mask].iloc[:,2:3])
 
-	st.markdown('Daily Cooking Pattern')
+	dail_cook_patt_lang = translator.translate('Daily Cooking Pattern', dest=language_code)
+	st.markdown('Daily Cooking Pattern / ' + dail_cook_patt_lang.text)
 	df_dail_cook = df_region.iloc[:3,4:7]
 	df_dail_cook1 = pd.DataFrame([['Breakfast',(bs_dc*0.35),(el_dc*0.35)],['Lunch',(bs_dc*0.4),(el_dc*0.4)],['Dinner',(bs_dc*0.25),(el_dc*0.25)]], index = [0,1,2],columns= ['Meal','Baseline energy demand (kWh)','e-cooking energy demand (kWh)'])
 	df_dail_cook = pd.merge(df_dail_cook,df_dail_cook1, how = 'left', on = 'Meal')
@@ -113,7 +179,9 @@ with st.expander('3\) Cooking Pattern'):
 
 # Results - Cooking Techno-economic analysis
 
-with st.expander('4\) Results  \- Cookstove Characteristics'):
+stove_char_lang = translator.translate('Results  \- Cookstove Characteristics',dest=language_code)
+
+with st.expander('4\) Results  \- Cookstove Characteristics / ' + stove_char_lang.text):
 	#baseline stove charactersitics
 	df_base_cf4 = df_base_cf2.loc[(df_base_cf2['Stove'] == prst_select)]
 	bs_life = (df_base_cf4['Life'].values[0]).round(0)
@@ -159,8 +227,9 @@ with st.expander('4\) Results  \- Cookstove Characteristics'):
 	### END - color dataframe
 
 # Results - Energy Demand)
+en_dem_cost_lang = translator.translate('Results  \- Energy Demand & Cost', dest=language_code)
 
-with st.expander('5\) Results  \- Energy Demand & Cost'):
+with st.expander('5\) Results  \- Energy Demand & Cost / ' + en_dem_cost_lang.text):
 
 	#dataframe - energy demand
 	encons_var  = {'Variable':['Daily cooking duration', 'Hourly consumption', 'Daily consumption', 'Annual consumption','Unit carbon emission','Annual carbon emission'],
@@ -254,8 +323,9 @@ with st.expander('5\) Results  \- Energy Demand & Cost'):
 ### END - Sample colour tables
 
 
+heal_lang = translator.translate('Results  \- Health Impacts', dest=language_code)
 
-with st.expander('6\) Results  \- Health Impacts'):
+with st.expander('6\) Results  \- Health Impacts / ' + heal_lang.text):
 	#baseline - health impacts
 	bs_dihap = df_base_cf4['Daily IHAP (PM2.5)'].values[0] * (prst_stack_percent * 0.01)
 	bs_ahap = (bs_dihap * 365 * 0.9) / 1000
@@ -312,7 +382,9 @@ with st.expander('6\) Results  \- Health Impacts'):
 	
 	st.markdown('<p style="font-size: 14px;"><em>The updated WHO guidelines state that annual average concentrations of PM2.5 should not exceed 5 µg/m3, while 24-hour average exposures should not exceed 15 µg/m3 more than 3 - 4 days per year.</em></p>', unsafe_allow_html=True)
 
-with st.expander('7\) Results  \- Financing'):
+
+fin_lang = translator.translate('Results  \- Financing', dest=language_code)
+with st.expander('7\) Results  \- Financing / ' + fin_lang.text):
 	#baseline - financing
 	bs_aninc = df_base_cf4['Annual Income'].values[0]
 	bs_pbp = df_base_cf4['Payback period'].values[0]
@@ -364,9 +436,13 @@ with st.expander('7\) Results  \- Financing'):
 
 ### END - Color Section
 
+discl_lang = translator.translate('This is a draft version. Values mentioned are based on research papers and empirical evidence.', dest=language_code)
 st.markdown('<mark>*This is a draft version. Values mentioned are based on research papers and empirical evidence.*</mark>', unsafe_allow_html=True)
+st.markdown(f'<mark>*{discl_lang.text}*</mark>', unsafe_allow_html=True)
 
+discl_lang1 = translator.translate('This analysis is a part of Deep Electrification initiative ideated by Vasudha Foundation and supported by SED Fund. For any queries, collaboration or further use of this research. Please drop a mail to bikash@vasudhaindia.org', dest=language_code)
 st.markdown('<mark>*This analysis is a part of Deep Electrification initiative ideated by Vasudha Foundation and supported by SED Fund. For any queries, collaboration or further use of this research. Please drop a mail to bikash@vasudhaindia.org*</mark>', unsafe_allow_html=True)
+st.markdown(f'<mark>{discl_lang1.text}</mark>', unsafe_allow_html=True)
 
 # 1 - create a data frame with the variables
 # 2 - append the units to the data frame
