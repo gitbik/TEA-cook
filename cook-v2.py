@@ -55,9 +55,12 @@ with st.sidebar:
 	# Get the language code from the selected language
 	language_code = [code for code, lang in languages.items() if lang == language][0]
 
-	hh_prof =  translator.translate('Household Profile', dest=language_code)
-	st.header("Household Profile / " + hh_prof.text)
-	
+	hh_prof = translator.translate('Household Profile', dest=language_code)
+	if hh_prof is not None:
+		st.header("Household Profile / " + hh_prof.text)
+	else:
+		st.error("Translation failed. Please try again later.")
+
 	adults_lang = translator.translate('Adults', dest=language_code)
 	adults = st.slider('Adults / ' + adults_lang.text, min_value=1, max_value=5, value=None, step=1)  # slider widget to select family members
 	
